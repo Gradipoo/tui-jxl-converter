@@ -4,20 +4,22 @@
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 ![Made with Curses](https://img.shields.io/badge/made%20with-curses-green.svg)
 
-<!-- create a short GIF showcasing the UI and replace this placeholder -->
+<!-- Create a short GIF showcasing the UI and replace this placeholder -->
 ![TUI JXL Converter Demo](https://via.placeholder.com/800x450.png?text=placeholder)
 
-A terminal-based user interface (TUI) for browsing, selecting, and converting images to the JPEG XL (`.jxl`) format. It's designed to be fast, interactive, and powerful, giving you full control over your batch conversions without leaving the terminal.
+A powerful, interactive terminal UI (TUI) for batch converting images to JPEG XL. It's a single Python script (`mkjxl.py`) that requires **no external Python packages** to run.
 
-This tool is a single Python script built on the standard `curses` library and is distributed as free and open-source software.
+This tool is distributed as free and open-source software.
 
-## Why TUI JXL Converter?
+## Why This Tool?
 
 While a simple shell loop like `for f in *.jpg; do ...` works, it lacks interactivity. You can't easily skip files, adjust quality on the fly, or handle failures gracefully. On the other hand, a full graphical application can be slow and overkill.
 
 This TUI provides the best of both worlds:
 -   **The speed and directness** of a command-line tool.
 -   **The visual feedback and interactivity** of a GUI.
+
+It acts as a powerful, user-friendly frontend for the `cjxl` command-line tool, and requires no `pip install` to get started.
 
 ## Features
 
@@ -32,14 +34,14 @@ This TUI provides the best of both worlds:
 
 ## Requirements
 
-#### Required
-- **Python 3.6+**: No external Python packages are needed.
+#### Required System Dependencies
+- **Python 3.6+**: The Python interpreter itself.
 - **`cjxl`**: The command-line encoder from [`libjxl-tools`](https://github.com/libjxl/libjxl).
   - **On Debian/Ubuntu:** `sudo apt install libjxl-tools`
   - **On macOS (Homebrew):** `brew install jpeg-xl`
   - **On Windows (Scoop):** `scoop install libjxl`
 
-#### Optional
+#### Optional System Dependencies
 - **ImageMagick**: Required for the **"Sanitize & Retry"** feature.
   - **On Debian/Ubuntu:** `sudo apt install imagemagick`
   - **On macOS (Homebrew):** `brew install imagemagick`
@@ -50,14 +52,14 @@ This TUI provides the best of both worlds:
 1.  **Get the script:**
     -   Clone the repository:
         ```bash
-        git clone https://github.com/your-username/your-repo-name.git
-        cd your-repo-name
+        git clone https://github.com/Gradipoo/tui-jxl-converter.git
+        cd tui-jxl-converter
         ```
-    -   Or just download the `convertjxl.py` file directly.
+    -   Or just download the `mkjxl.py` script directly.
 
 2.  **Make it executable (optional but recommended):**
     ```bash
-    chmod +x convertjxl.py
+    chmod +x mkjxl.py
     ```
 
 ## Usage
@@ -66,12 +68,16 @@ Run the script from your terminal.
 
 -   **To process files in the current directory:**
     ```bash
-    ./convertjxl.py
+    ./mkjxl.py
+    # or if not executable:
+    python3 mkjxl.py
     ```
 
 -   **To process files in a specific directory:**
     ```bash
-    ./convertjxl.py /path/to/your/images
+    ./mkjxl.py /path/to/your/images
+    # or if not executable:
+    python3 mkjxl.py /path/to/your/images
     ```
 
 > **:warning: A Note on Deleting Originals**
@@ -99,7 +105,7 @@ Run the script from your terminal.
 | `R`                     | Toggle **R**ecursive                                                     | Toggles recursive directory scanning on or off and reloads the file list.                                                                |
 | `D`                     | Toggle **D**elete Originals                                              | Toggles whether original files are deleted after a *successful* conversion. See warning above.                                           |
 | `O`                     | Set **O**utput Directory                                                 | Opens a dialog to set a custom output directory. Leave blank to save `.jxl` files in the same directory as their source.               |
-| `F`                     | **F**ilter Failed                                                        | Toggles the view to show only files that have failed conversion. Only appears if there are failed files.                               |
+| `F`                     | **F**ilter Failed                                                        | Toggles the view to show only a list of files that have failed conversion. Only appears if there are failed files.                        |
 | `B`                     | Toggle **B**ug Log                                                       | Toggles debug logging to `jxl_converter_debug.txt`. Useful for troubleshooting.                                                          |
 | **System**              |                                                                          |                                                                                                                                          |
 | `F5`                    | Refresh                                                                  | Reloads the file list from the source directory.                                                                                         |
