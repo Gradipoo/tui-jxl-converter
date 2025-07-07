@@ -1,0 +1,8 @@
+# This configuration file presents users with a template chooser
+# when they click the "New issue" button in your repository.
+
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting Guide
+    url: https://github.com/Gradipoo/tui-jxl-converter/blob/main/README.md#troubleshooting
+    about: Please check the README for common issues before submitting a bug report.
