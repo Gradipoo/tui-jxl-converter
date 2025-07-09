@@ -89,6 +89,8 @@ class JxlConverterTUI:
         self.total_bytes_before = 0; self.total_bytes_after = 0
         self.conversions_success = 0; self.conversions_failed = 0; self.start_time = 0; self.last_conversion_summary = ""
         self.cjxl_cmd = shutil.which("cjxl"); self.imagemagick_cmd = shutil.which("magick") or shutil.which("convert")
+        self.reprocessing_indices = set()  # Track which files are being reprocessed
+        self.original_total_selected = 0   # Track original batch size for progress display
         curses.start_color()
         for i, (fg, bg) in enumerate([(curses.COLOR_BLACK, curses.COLOR_WHITE), (curses.COLOR_GREEN, curses.COLOR_BLACK),
                                       (curses.COLOR_YELLOW, curses.COLOR_BLACK), (curses.COLOR_RED, curses.COLOR_BLACK),
@@ -111,6 +113,7 @@ class JxlConverterTUI:
     def _update_status(self, idx, status, **kwargs):
         self.status_queue.put({'idx': idx, 'status': status, **kwargs})
 
+    # Replace the existing _process_status_queue method with this updated version:
     def _process_status_queue(self):
         just_finished = False
         while not self.status_queue.empty():
@@ -127,14 +130,25 @@ class JxlConverterTUI:
                         self.total_bytes_before += b_before; self.total_bytes_after += b_after
                         savings=b_before-b_after; savings_pct=(savings/b_before*100) if b_before>0 else 0
                         info_text=f"{self._format_bytes(savings)} saved ({savings_pct:.1f}%)"
+
+                    # Remove from reprocessing set when successfully completed
+                    if idx in self.reprocessing_indices:
+                        self.reprocessing_indices.remove(idx)
+
                 elif status == 'FAILED':
                     self.conversions_failed += 1; self.failed_indices.add(idx)
                     info_text = update.get('message', 'Unknown Error')
+
+                    # Remove from reprocessing set when failed
+                    if idx in self.reprocessing_indices:
+                        self.reprocessing_indices.remove(idx)
+
                 self.statuses[idx]['info_str'] = info_text
 
         if self.is_converting and self.conversion_queue.empty():
             total_processed = self.conversions_success + self.conversions_failed
-            if total_processed >= len(self.selected):
+            # Check if we've completed all files from the original batch
+            if total_processed >= self.original_total_selected:
                 self.is_converting = False
                 elapsed = time.time() - self.start_time
                 self.show_message(f"Finished {total_processed} files in {elapsed:.2f}s.", 2)
@@ -178,6 +192,7 @@ class JxlConverterTUI:
             for i in range(len(self.files)): self.statuses[i] = {'status': 'PENDING', 'message': '', 'info_str': ''}
         except Exception as e: self.show_message(f"Error loading files: {e}", 4)
 
+    # Replace the existing draw_header method with this updated version:
     def draw_header(self, h, w):
         try:
             self.stdscr.addstr(0, 0, " " * (w - 1), curses.color_pair(8))
@@ -187,7 +202,9 @@ class JxlConverterTUI:
 
             header_content = ""
             if self.is_converting:
-                total = len(self.selected); done = self.conversions_success + self.conversions_failed
+                # Always show progress against original total
+                total = self.original_total_selected
+                done = self.conversions_success + self.conversions_failed
                 elapsed_time = time.time() - self.start_time
                 time_str = time.strftime('%M:%S', time.gmtime(elapsed_time))
                 savings_str = f"Saved: {self._format_bytes(self.total_bytes_before - self.total_bytes_after)}"
@@ -315,6 +332,7 @@ class JxlConverterTUI:
              target_path = target_dir / f"{in_path.stem}-{counter}.jxl"; counter += 1
         return target_path
 
+    # Replace the existing _start_conversion_session method with this updated version:
     def _start_conversion_session(self, is_sanitize_run=False):
         if self.is_converting: self.show_message("A conversion is already in progress.", 3); return
         if not self.selected: self.show_message("No files selected to convert.", 3); return
@@ -325,6 +343,28 @@ class JxlConverterTUI:
         self._log_debug("--- Preparing new conversion session ---")
         tasks = []
         existing_targets_in_batch = set()
+
+        if is_sanitize_run:
+            # For sanitize runs, mark these files as being reprocessed
+            # and adjust counters to account for previous processing
+            self.reprocessing_indices = self.selected.copy()
+            # Subtract their previous contributions from totals
+            for idx in self.selected:
+                if idx in self.statuses and self.statuses[idx].get('status') == 'FAILED':
+                    # Remove previous failed attempt from failed count
+                    if self.conversions_failed > 0:
+                        self.conversions_failed -= 1
+        else:
+            # For new conversion sessions, reset everything
+            self.is_converting = True
+            self.start_time = time.time()
+            self.conversions_success = 0
+            self.conversions_failed = 0
+            self.total_bytes_before = 0
+            self.total_bytes_after = 0
+            self.original_total_selected = len(self.selected)
+            self.reprocessing_indices = set()
+
         for idx in sorted(list(self.selected)):
             input_path = self.files[idx]
             target_path = self._get_unique_target_path(input_path, existing_targets_in_batch)
@@ -333,15 +373,15 @@ class JxlConverterTUI:
             tasks.append({'idx': idx, 'target_path': target_path, 'sanitize': is_sanitize_run})
             self._log_debug(f"  - Queued Task: {input_path.name} -> {target_path.name}")
 
-        if not is_sanitize_run:
-            self.is_converting = True; self.start_time = time.time(); self.conversions_success = 0
-            self.conversions_failed = 0; self.total_bytes_before = 0; self.total_bytes_after = 0
-
         for task in tasks:
             self.conversion_queue.put(task)
             idx = task['idx']
             self.statuses[idx]['status'] = 'QUEUED'
             if idx in self.failed_indices: self.failed_indices.remove(idx)
+
+        # Start converting flag for sanitize runs
+        if is_sanitize_run:
+            self.is_converting = True
 
         self._log_debug(f"--- Starting worker thread with {len(tasks)} tasks ---")
         if self.conversion_thread is None or not self.conversion_thread.is_alive():
@@ -471,46 +511,46 @@ class JxlConverterTUI:
                 if key == -1:
                     break
                 keys.append(key)
-            
+
             if keys: # Any user input clears the post-conversion summary.
                 self.last_conversion_summary = ""
-            
+
             # Process non-navigation keys first
             non_nav_keys = []
             last_nav_key = None
-            
+
             for key in keys:
-                if key in [curses.KEY_UP, ord('k'), curses.KEY_DOWN, ord('j'), 
+                if key in [curses.KEY_UP, ord('k'), curses.KEY_DOWN, ord('j'),
                            curses.KEY_PPAGE, curses.KEY_NPAGE, ord('g'), ord('G')]:
                     last_nav_key = key  # Keep only the last navigation key
                 else:
                     non_nav_keys.append(key)
-            
+
             # Process all non-navigation keys
             for key in non_nav_keys:
-                if key in [27, ord('q')] and not self.is_converting: 
+                if key in [27, ord('q')] and not self.is_converting:
                     return
-                if key in [27, ord('q')] and self.is_converting and ConfirmationDialog(self.stdscr, "Still converting. Quit anyway?").run(): 
+                if key in [27, ord('q')] and self.is_converting and ConfirmationDialog(self.stdscr, "Still converting. Quit anyway?").run():
                     return
-                
+
                 visible_files_before_input = self.get_visible_files()
                 self.handle_input(key, visible_files_before_input)
-            
+
             # Process only the last navigation key if there was one
             if last_nav_key is not None:
-                if last_nav_key in [27, ord('q')] and not self.is_converting: 
+                if last_nav_key in [27, ord('q')] and not self.is_converting:
                     return
-                if last_nav_key in [27, ord('q')] and self.is_converting and ConfirmationDialog(self.stdscr, "Still converting. Quit anyway?").run(): 
+                if last_nav_key in [27, ord('q')] and self.is_converting and ConfirmationDialog(self.stdscr, "Still converting. Quit anyway?").run():
                     return
-                
+
                 visible_files_before_input = self.get_visible_files()
                 self.handle_input(last_nav_key, visible_files_before_input)
-            
+
             self._process_status_queue()
-        
+
             visible_files = self.get_visible_files()
             if self.current_row >= len(visible_files): self.current_row = max(0, len(visible_files) - 1)
-        
+
             self.stdscr.erase(); h,w=self.stdscr.getmaxyx()
             if h<10 or w<80: self.stdscr.addstr(0,0,"Terminal too small...")
             else: self.draw_header(h,w); self.draw_file_list(h,w,visible_files); self.draw_status_bar(h,w); self.draw_footer(h,w)
