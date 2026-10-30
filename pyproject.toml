@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mkjxl"
+version = "1.0.0"
+description = "Terminal UI for batch converting images to JPEG XL"
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Gradipoo" }]
+keywords = ["jpeg-xl", "jxl", "tui", "images"]
+classifiers = [
+  "Environment :: Console",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+]
+dependencies = [
+  "textual>=3",
+  "pillow>=10",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.24",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+mkjxl = "mkjxl.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Gradipoo/tui-jxl-converter"
+Repository = "https://github.com/Gradipoo/tui-jxl-converter"
+Issues = "https://github.com/Gradipoo/tui-jxl-converter/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
