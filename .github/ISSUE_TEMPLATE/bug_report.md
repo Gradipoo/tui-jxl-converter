@@ -12,7 +12,7 @@ A clear and concise description of what the bug is. Please do not just say "it d
 
 ### To Reproduce
 Steps to reproduce the behavior:
-1. Start the application with the command: `img2jxl /path/to/problem/files`
+1. Start the application with the command: `mkjxl /path/to/problem/files`
 2. Scroll down to file '...'
 3. Press the '...' key
 4. See error message or incorrect behavior '...'

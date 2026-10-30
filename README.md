@@ -1,151 +1,144 @@
-# TUI JXL Converter
+# mkjxl
 
-![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)
+![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
-![Made with Curses](https://img.shields.io/badge/made%20with-curses-green.svg)
+![Made with Textual](https://img.shields.io/badge/made%20with-Textual-green.svg)
 
-<!-- Create a short GIF showcasing the UI and replace this placeholder -->
-![TUI JXL Converter Demo](https://via.placeholder.com/800x450.png?text=placeholder)
+![mkjxl](docs/screenshot.png)
 
-A powerful, interactive terminal UI (TUI) for batch converting images to JPEG XL. It's a single Python script (`mkjxl.py`) that requires **no external Python packages** to run.
+A terminal app for batch converting images to JPEG XL. It is a front end for `cjxl` from [libjxl](https://github.com/libjxl/libjxl).
 
-This tool is distributed as free and open-source software.
+You pick files, set quality and effort, and watch the batch run without the UI locking up.
 
-## Why This Tool?
+## Install
 
-While a simple shell loop like `for f in *.jpg; do ...` works, it lacks interactivity. You can't easily skip files, adjust quality on the fly, or handle failures gracefully. On the other hand, a full graphical application can be slow and overkill.
+You still need `cjxl` on your PATH. The app does not install it for you. If it is missing, mkjxl shows the exact command for a package manager it can see. Copy puts that command on the clipboard. macOS Terminal often ignores that request. If paste is empty, select the command in the box and copy it from the terminal.
 
-This TUI provides the best of both worlds:
--   **The speed and directness** of a command-line tool.
--   **The visual feedback and interactivity** of a GUI.
+### Download a release
 
-It acts as a powerful, user-friendly frontend for the `cjxl` command-line tool, and requires no `pip install` to get started.
+Prebuilt programs are attached to [GitHub Releases](https://github.com/Gradipoo/tui-jxl-converter/releases) when a version tag such as `v1.0.0` is pushed.
 
-## Features
+| File | System |
+| --- | --- |
+| `mkjxl-linux-x86_64` | Linux, 64-bit |
+| `mkjxl-windows-x64.exe` | Windows, 64-bit |
+| `mkjxl-macos-arm64` | macOS, Apple Silicon |
 
--   **Interactive File Browser**: Navigate your image files with smooth, buffered scrolling and full-line highlighting.
--   **Real-time Progress**: A dynamic header shows detailed progress during conversions, including files processed, total space saved, and elapsed time.
--   **Non-Blocking Conversions**: The UI remains fully responsive while conversions run in the background.
--   **Powerful Configuration**: Interactively set `cjxl` quality and effort, toggle recursive search, manage original file deletion, and specify a custom output directory.
--   **Smart "Sanitize & Retry"**: Automatically prompts to clean and re-convert any files that failed, using ImageMagick to strip problematic metadata.
--   **Advanced Filtering**: Instantly toggle a view to show only the files that have failed to convert, making it easy to diagnose issues.
--   **Conflict Resolution**: Automatically renames output files to prevent overwriting existing ones.
--   **Debug Logging**: Optional logging to a local file for easy troubleshooting.
+The download does not include `cjxl`. Install that separately (see below), then run the program.
 
-## Requirements
+The Linux file is built on GitHub's current Ubuntu runner, so it needs a similarly recent glibc. Older distributions should use pipx or uv instead.
 
-#### Required System Dependencies
-- **Python 3.6+**: The Python interpreter itself.
-- **`cjxl`**: The command-line encoder from [`libjxl-tools`](https://github.com/libjxl/libjxl).
-  - **On Debian/Ubuntu:** `sudo apt install libjxl-tools`
-  - **On macOS (Homebrew):** `brew install jpeg-xl`
-  - **On Windows (Scoop):** `scoop install libjxl`
+The macOS build is not signed or notarized. The first open is blocked until you allow it:
 
-#### Optional System Dependencies
-- **ImageMagick**: Required for the **"Sanitize & Retry"** feature.
-  - **On Debian/Ubuntu:** `sudo apt install imagemagick`
-  - **On macOS (Homebrew):** `brew install imagemagick`
-  - **On Windows (Scoop):** `scoop install imagemagick`
+1. In Finder, right-click `mkjxl-macos-arm64` and choose Open, then Open again.
+2. Or, in Terminal: `xattr -d com.apple.quarantine mkjxl-macos-arm64`
 
-## Installation
+Windows SmartScreen may warn on the first launch because the file is not signed. Choose More info, then Run anyway.
 
-1.  **Get the script:**
-    -   Clone the repository:
-        ```bash
-        git clone https://github.com/Gradipoo/tui-jxl-converter.git
-        cd tui-jxl-converter
-        ```
-    -   Or just download the `mkjxl.py` script directly.
+Intel Macs are not in the release build. Use pipx or uv on those machines.
 
-2.  **Make it executable (optional but recommended):**
-    ```bash
-    chmod +x mkjxl.py
-    ```
+Make the Linux and macOS files executable (`chmod +x`) if the download did not keep that bit.
+
+### pipx or uv
+
+```bash
+pipx install git+https://github.com/Gradipoo/tui-jxl-converter.git
+```
+
+```bash
+uv tool install git+https://github.com/Gradipoo/tui-jxl-converter.git
+```
+
+### From source
+
+```bash
+git clone https://github.com/Gradipoo/tui-jxl-converter.git
+cd tui-jxl-converter
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+mkjxl
+```
+
+On Windows, activate with `.venv\Scripts\activate`.
+
+## cjxl
+
+| System | Package manager | Command |
+| --- | --- | --- |
+| macOS | Homebrew | `brew install jpeg-xl` |
+| Debian, Ubuntu | apt | `sudo apt-get install -y libjxl-tools` |
+| Fedora | dnf | `sudo dnf install -y libjxl-utils` |
+| Arch | pacman | `sudo pacman -S --noconfirm libjxl` |
+| openSUSE | zypper | `sudo zypper --non-interactive install libjxl-tools` |
+| Windows | winget | `winget install -e --id libjxl.libjxl --accept-package-agreements --accept-source-agreements` |
+| Windows | Scoop | `scoop install libjxl` |
+
+Chocolatey does not publish a libjxl package. Use winget or Scoop there.
+
+If `cjxl` is installed somewhere odd, point at it with `MKJXL_CJXL=/path/to/cjxl`.
+
+## Sanitize
+
+Failed files can be rewritten as a plain PNG and tried again. That step uses Pillow, which is installed with mkjxl. ImageMagick (`magick`) is optional, and only used when Pillow cannot read the file. On Windows, the system `convert.exe` is not ImageMagick and is ignored.
 
 ## Usage
 
-Run the script from your terminal.
+```bash
+mkjxl
+mkjxl /path/to/images
+```
 
--   **To process files in the current directory:**
-    ```bash
-    ./mkjxl.py
-    # or if not executable:
-    python3 mkjxl.py
-    ```
+The default output folder is `./converted`, relative to the directory you started in. Clear the output field to write each `.jxl` next to its source file.
 
--   **To process files in a specific directory:**
-    ```bash
-    ./mkjxl.py /path/to/your/images
-    # or if not executable:
-    python3 mkjxl.py /path/to/your/images
-    ```
+Deleting originals is off until you turn it on. The app asks before a batch that will delete sources, and it only deletes a file after `cjxl` succeeds. Keep a backup if the files matter.
 
-> **:warning: A Note on Deleting Originals**
->
-> The `(D)elete Originals` feature is a destructive operation. It permanently deletes the source file after a *successful* conversion. While it will prompt for confirmation before the first conversion in a session, be absolutely sure you have backups if your data is important.
+## Keys
 
-## Interface and Keybindings
+| Key | Action |
+| --- | --- |
+| Up/Down, `j`/`k` | Move |
+| `g` / `G` | Top / bottom |
+| PageUp / PageDown | Page |
+| Space, or click a row | Select or clear that file |
+| `a` / `A` | Select all visible files / select none |
+| Enter | Convert the selected files |
+| `Q` | Focus quality (1-100, default 90) |
+| `E` | Focus effort (1-9, default 7) |
+| `r` | Recursive on or off |
+| `d` | Delete originals on or off |
+| `o` | Focus the output directory |
+| `f` | Show failed files only |
+| `b` | Debug log on or off |
+| `S` | Sanitize failed files and retry |
+| `F5` | Refresh the file list |
+| `s` | Show the `cjxl` install command, or report the path if `cjxl` was found |
+| `?` | Key list |
+| `q` | Quit. Asks first if a conversion is still running |
 
-| Keys                    | Action                                                                   | Details                                                                                                                                  |
-| ----------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Navigation**          |                                                                          |                                                                                                                                          |
-| `↑` / `k`               | Move Up                                                                  | Move the cursor up one line.                                                                                                             |
-| `↓` / `j`               | Move Down                                                                | Move the cursor down one line.                                                                                                           |
-| `PageUp` / `PageDown`   | Scroll Page                                                              | Scroll up or down by a full page.                                                                                                        |
-| `g` / `G`               | Go to Top / Bottom                                                       | Instantly jump to the first or last file in the list.                                                                                    |
-| **File Selection**      |                                                                          |                                                                                                                                          |
-| `Space`                 | Select / Deselect                                                        | Toggle selection for the file under the cursor. Selected files are marked with a `*`.                                                    |
-| `a` / `A`               | Select All / None                                                        | Press `a` to select all visible files, `A` to deselect all files.                                                                        |
-| **Conversion**          |                                                                          |                                                                                                                                          |
-| `Enter`                 | **Start Conversion**                                                     | Begins converting all selected files using the current settings.                                                                         |
-| `ESC` / `q`             | Quit                                                                     | Exits the application. Prompts for confirmation if a conversion is in progress.                                                          |
-| **Configuration (Toggles & Settings)** |                                                                        |                                                                                                                                          |
-| `Q`                     | Set **Q**uality                                                          | Opens a dialog to set the JPEG XL quality (1-100). Default: `90`.                                                                          |
-| `E`                     | Set **E**ffort                                                           | Opens a dialog to set the encoding effort (1-9). Higher is slower but may produce smaller files. Default: `7` (Squirrel).                |
-| `R`                     | Toggle **R**ecursive                                                     | Toggles recursive directory scanning on or off and reloads the file list.                                                                |
-| `D`                     | Toggle **D**elete Originals                                              | Toggles whether original files are deleted after a *successful* conversion. See warning above.                                           |
-| `O`                     | Set **O**utput Directory                                                 | Opens a dialog to set a custom output directory. Leave blank to save `.jxl` files in the same directory as their source.               |
-| `F`                     | **F**ilter Failed                                                        | Toggles the view to show only a list of files that have failed conversion. Only appears if there are failed files.                        |
-| `B`                     | Toggle **B**ug Log                                                       | Toggles debug logging to `jxl_converter_debug.txt`. Useful for troubleshooting.                                                          |
-| **System**              |                                                                          |                                                                                                                                          |
-| `F5`                    | Refresh                                                                  | Reloads the file list from the source directory.                                                                                         |
+`q` quits. Shift+Q focuses quality. The mouse works in Windows Terminal, and in macOS and Linux terminals that support it.
 
----
+JPEG files try a lossless JPEG transcode first. If that fails, `cjxl` runs again with the quality setting. Other files, and anything that was sanitized, use the quality setting directly.
 
-## Power User Guide
+## Output paths
 
-### The "Sanitize & Retry" Feature
+- Default: `./converted/`.
+- With a custom directory and recursive mode off, every file lands in that one directory.
+- With a custom directory and recursive mode on, folders are mirrored. `source/album/cover.png` becomes `output/album/cover.jxl`.
+- Blank output: the `.jxl` is written next to the source.
+- If the target name already exists, or another file in the same batch wants it, the new file is `name-1.jxl`, then `name-2.jxl`, and so on.
 
--   **Problem:** Some images, especially those downloaded from the web, contain corrupted or non-standard metadata chunks that can cause `cjxl` to fail.
--   **Solution:** When a batch conversion finishes with failures, the script will ask if you want to "Sanitize & Retry". If you agree, it uses **ImageMagick** to perform a clean-copy operation (`magick input.jpg -strip output.png`). This creates a temporary, standard PNG file with all non-essential metadata removed.
--   **Result:** The script then attempts to convert this "sanitized" temporary file, which has a much higher chance of success.
+## Debug log
 
-### Output Directory Logic
-
--   **Default:** `./converted/`
--   **Custom Directory (Non-Recursive):** Set an output path with `(O)`. All converted files will be placed in that directory.
--   **Custom Directory (Recursive):** When `(R)`ecursive mode is on and a custom output directory is set, the original directory structure is mirrored inside your output directory.
-    -   `source/subdir/image.png` -> `output/subdir/image.jxl`
--   **"Same as Source":** By setting the output directory to a blank value, all `.jxl` files will be saved directly alongside their original counterparts.
-
-### Debugging
-
-If you encounter issues, enable the debug log by pressing `B`. This will create a `jxl_converter_debug.txt` file in the directory where you launched the script. This log contains detailed information about queued tasks, `cjxl` commands, and any internal errors.
+Press `b` to append a log to `jxl_converter_debug.txt` in the directory where you started mkjxl.
 
 ## Troubleshooting
 
--   **`cjxl: command not found`**: The script cannot find the JPEG XL encoder. Make sure `libjxl-tools` is installed and `cjxl` is in your system's `PATH`.
--   **"Terminal too small"**: The application requires a minimum terminal size. Please make your terminal window larger.
--   **"A curses error occurred..."**: This can happen if the terminal is resized too quickly. Simply restart the script.
-
-## Contributing
-
-Contributions are welcome! If you have a feature request, find a bug, or have a suggestion for improvement, please open a GitHub Issue. Pull requests are also encouraged.
+- **cjxl was not found.** Press `s`. Copy the command for the package manager on your machine, run it, then press `s` again.
+- **The window looks cramped.** Widen the terminal. Below 100 columns the settings sit under the file list.
 
 ## License
 
-This project is licensed under the **GNU General Public License v3.0**.
+Copyright (C) 2025-2026 Gradipoo.
 
-This means you are free to use, modify, and distribute this software. However, if you distribute a modified version or a program that incorporates this code, you must also license your entire program under the GPLv3 and make the complete source code available. This "share-alike" principle ensures that the software and its derivatives will always remain free and open-source.
-
-See the [LICENSE](LICENSE) file for the full license text.
+GNU General Public License v3.0. You can use, change, and share this program. If you distribute a modified version, or a program that includes this code, that program must also be under GPLv3 and you must offer the source. See [LICENSE](LICENSE).
