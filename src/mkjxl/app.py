@@ -502,6 +502,7 @@ class MkJxlApp(App):
 
     def _tick(self) -> None:
         if linux_stdin_deleted():
+            self._cancel.set()
             self.exit()
             return
         if self._converting:

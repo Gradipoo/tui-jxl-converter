@@ -190,4 +190,5 @@ async def test_tick_exits_when_the_terminal_device_is_gone(tmp_path: Path, monke
         await pilot.pause()
         app._tick()
         await pilot.pause()
+        assert app._cancel.is_set()
         assert not app.is_running
