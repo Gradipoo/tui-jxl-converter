@@ -89,6 +89,8 @@ mkjxl
 mkjxl /path/to/images
 ```
 
+New to mkjxl? Read the [getting started guide](docs/GUIDE.md).
+
 The default output folder is `./converted`, relative to the directory you started in. Clear the output field to write each `.jxl` next to its source file.
 
 Deleting originals is off until you turn it on. The app asks before a batch that will delete sources, and it only deletes a file after `cjxl` succeeds. Keep a backup if the files matter.
