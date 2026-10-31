@@ -25,5 +25,8 @@ def main(argv: list[str] | None = None) -> int:
     if not directory.is_dir():
         print(f"Error: directory not found: {directory}", file=sys.stderr)
         return 1
+    if not sys.stdin.isatty():
+        print("Error: mkjxl needs a terminal.", file=sys.stderr)
+        return 1
     MkJxlApp(directory).run()
     return 0
