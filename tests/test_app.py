@@ -2,7 +2,7 @@ from pathlib import Path
 
 from textual.widgets import Input
 
-from mkjxl.app import MissingCjxlScreen, MkJxlApp
+from mkjxl.app import MissingCjxlScreen, MkJxlApp, linux_stdin_deleted
 from mkjxl.convert import ConvertResult
 from mkjxl.deps import InstallCommand
 
@@ -146,3 +146,48 @@ async def test_cancel_counts_the_files_not_started(tmp_path: Path, monkeypatch) 
         assert app._batch_cancelled == 2
         assert "2 cancelled" in app.status_message
         await pilot.press("q")
+
+
+def test_linux_stdin_deleted_when_the_device_is_gone(monkeypatch) -> None:
+    monkeypatch.setattr("mkjxl.app.sys.platform", "linux")
+    monkeypatch.setattr("mkjxl.app.os.isatty", lambda _fd: True)
+    monkeypatch.setattr("mkjxl.app.os.readlink", lambda _path: "/dev/pts/3 (deleted)")
+    assert linux_stdin_deleted() is True
+
+
+def test_linux_stdin_deleted_when_the_device_is_live(monkeypatch) -> None:
+    monkeypatch.setattr("mkjxl.app.sys.platform", "linux")
+    monkeypatch.setattr("mkjxl.app.os.isatty", lambda _fd: True)
+    monkeypatch.setattr("mkjxl.app.os.readlink", lambda _path: "/dev/pts/3")
+    assert linux_stdin_deleted() is False
+
+
+def test_linux_stdin_deleted_skips_other_platforms(monkeypatch) -> None:
+    monkeypatch.setattr("mkjxl.app.sys.platform", "darwin")
+
+    def fail_readlink(_path: str) -> str:
+        raise AssertionError("readlink should not be called")
+
+    monkeypatch.setattr("mkjxl.app.os.readlink", fail_readlink)
+    assert linux_stdin_deleted() is False
+
+
+def test_linux_stdin_deleted_skips_a_pipe(monkeypatch) -> None:
+    monkeypatch.setattr("mkjxl.app.sys.platform", "linux")
+    monkeypatch.setattr("mkjxl.app.os.isatty", lambda _fd: False)
+
+    def fail_readlink(_path: str) -> str:
+        raise AssertionError("readlink should not be called")
+
+    monkeypatch.setattr("mkjxl.app.os.readlink", fail_readlink)
+    assert linux_stdin_deleted() is False
+
+
+async def test_tick_exits_when_the_terminal_device_is_gone(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("mkjxl.app.linux_stdin_deleted", lambda: True)
+    app = _app(tmp_path, "cjxl")
+    async with app.run_test(size=(80, 24)) as pilot:
+        await pilot.pause()
+        app._tick()
+        await pilot.pause()
+        assert not app.is_running

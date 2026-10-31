@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import sys
 import threading
 import time
 from pathlib import Path
@@ -47,6 +49,21 @@ from mkjxl.paths import (
 )
 
 _AUTO = object()
+
+
+def linux_stdin_deleted() -> bool:
+    """True when Linux reports that the terminal device for stdin is gone."""
+    if sys.platform != "linux":
+        return False
+    try:
+        fd = sys.__stdin__.fileno()
+        if not os.isatty(fd):
+            return False
+        target = os.readlink(f"/proc/self/fd/{fd}")
+    except (OSError, ValueError):
+        return False
+    return target.endswith(" (deleted)")
+
 
 HELP_TEXT = """\
 Navigation
@@ -484,6 +501,9 @@ class MkJxlApp(App):
         status.update(message)
 
     def _tick(self) -> None:
+        if linux_stdin_deleted():
+            self.exit()
+            return
         if self._converting:
             self._render_progress()
 
