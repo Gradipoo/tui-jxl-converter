@@ -12,7 +12,7 @@ You pick files, set quality and effort, and watch the batch run without the UI l
 
 ## Install
 
-You still need `cjxl` on your PATH. The app does not install it for you. If it is missing, mkjxl shows the exact command for a package manager it can see. Copy puts that command on the clipboard. macOS Terminal often ignores that request. If paste is empty, select the command in the box and copy it from the terminal.
+pipx and uv installs still need `cjxl` on your PATH. The app does not install it for you. The Homebrew formula below does install `jpeg-xl`, which provides `cjxl`. If `cjxl` is missing, mkjxl shows the exact command for a package manager it can see. Copy puts that command on the clipboard. macOS Terminal often ignores that request. If paste is empty, select the command in the box and copy it from the terminal.
 
 ### Download a release
 
@@ -41,6 +41,18 @@ Make the Linux and macOS files executable (`chmod +x`) if the download did not k
 
 ### pipx or uv
 
+From PyPI:
+
+```bash
+pipx install mkjxl
+```
+
+```bash
+uv tool install mkjxl
+```
+
+From git:
+
 ```bash
 pipx install git+https://github.com/Gradipoo/tui-jxl-converter.git
 ```
@@ -48,6 +60,16 @@ pipx install git+https://github.com/Gradipoo/tui-jxl-converter.git
 ```bash
 uv tool install git+https://github.com/Gradipoo/tui-jxl-converter.git
 ```
+
+pipx and uv do not install `cjxl`. Install that separately (see below).
+
+### Homebrew
+
+```bash
+brew install gradipoo/tap/mkjxl
+```
+
+That formula also installs `jpeg-xl` (`cjxl`).
 
 ### From source
 
