@@ -81,7 +81,8 @@ jobs:
           from pathlib import Path
 
           tag = os.environ["GITHUB_REF"].removeprefix("refs/tags/")
-          version = tomllib.loads(Path("pyproject.toml").read_bytes())["project"]["version"]
+          with Path("pyproject.toml").open("rb") as fh:
+              version = tomllib.load(fh)["project"]["version"]
           expected = f"v{version}"
           if tag != expected:
               raise SystemExit(f"tag {tag} is not {expected}")

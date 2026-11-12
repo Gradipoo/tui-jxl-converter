@@ -3,7 +3,7 @@ class Mkjxl < Formula
 
   desc "Terminal UI for batch converting images to JPEG XL"
   homepage "https://github.com/Gradipoo/tui-jxl-converter"
-  url "https://files.pythonhosted.org/packages/00/00/placeholderplaceholderplaceholderplaceholderplaceh/mkjxl-1.0.2.tar.gz"
+  url "https://files.pythonhosted.org/packages/00/00/placeholderplaceholderplaceholderplaceholderplaceh/mkjxl-1.0.3.tar.gz"
   sha256 "0000000000000000000000000000000000000000000000000000000000000000"
   license "GPL-3.0-only"
 
